@@ -1,0 +1,14 @@
+.chat-input input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 20px;
+  border: 1px solid #ffbf80; /* subtle orange border */
+  outline: none;
+  font-size: 14px;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.chat-input input:focus {
+  border: 1px solid #ff7f00;
+  box-shadow: 0 0 5px rgba(255,127,0,0.4);
+}

@@ -1,0 +1,13 @@
+.message-bubble .content {
+  max-width: 70%;
+  background-color: #fff3e0; /* light orange for other messages */
+  padding: 8px 12px;
+  border-radius: 12px;
+  position: relative;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.message-bubble.own .content {
+  background-color: #ffedcc; /* lighter orange for own messages */
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}

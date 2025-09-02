@@ -1,0 +1,30 @@
+.member-list {
+  background-color: #fff;
+  border-left: 1px solid #ddd;
+  width: 220px;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.member-item img.badge-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.member-item span {
+  font-size: 13px;
+}
+
+.member-item span:last-child {
+  margin-left: auto;
+  font-size: 12px;
+  color: gray;
+}

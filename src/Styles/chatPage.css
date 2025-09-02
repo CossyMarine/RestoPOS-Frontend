@@ -1,0 +1,5 @@
+.room-item:hover {
+  background-color: #fff3e0; /* light orange hover */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transform: scale(1.02);
+}
