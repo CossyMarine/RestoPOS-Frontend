@@ -1,221 +1,209 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+// src/Pages/Register.jsx
+import React, { useState, useEffect, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import zxcvbn from "zxcvbn";
-import { Link, useNavigate } from "react-router-dom";
 import countries from "i18n-iso-countries";
 import enLocale from "i18n-iso-countries/langs/en.json";
-import "../Styles/Register.css";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { AuthContext } from "../Context/AuthContext";
+import logo from "../Assets/logo.png";
 
 countries.registerLocale(enLocale);
 
 const Register = () => {
+  const { register } = useContext(AuthContext);
   const navigate = useNavigate();
   const [form, setForm] = useState({
-    fullName: "",
-    email: "",
-    country: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-    agreedToTerms: false,
+    fullName: "", email: "", country: "", phone: "",
+    password: "", confirmPassword: "", agreedToTerms: false,
   });
-
   const [strength, setStrength] = useState(null);
-  const [message, setMessage] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [showCpw, setShowCpw] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
   const [countryList, setCountryList] = useState([]);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [selectedCountryCode, setSelectedCountryCode] = useState("us"); // default
+  const [phoneCountry, setPhoneCountry] = useState("ke");
 
-  // Load country list
   useEffect(() => {
-    const countryObj = countries.getNames("en", { select: "official" });
-    const countryArr = Object.entries(countryObj).map(([code, name]) => ({
-      code: code.toLowerCase(),
-      name,
-    }));
-    setCountryList(countryArr);
+    const obj = countries.getNames("en", { select: "official" });
+    setCountryList(Object.entries(obj).map(([code, name]) => ({ code: code.toLowerCase(), name })));
   }, []);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-
-    if (e.target.name === "password") {
-      const result = zxcvbn(e.target.value);
-      setStrength(result.score); // 0–4
-    }
-
-    // ✅ if user selects a country, update phone input as well
-    if (e.target.name === "country") {
-      const selected = countryList.find((c) => c.name === e.target.value);
-      if (selected) {
-        setSelectedCountryCode(selected.code); // update PhoneInput country
-      }
+    const { name, value, type, checked } = e.target;
+    setForm({ ...form, [name]: type === "checkbox" ? checked : value });
+    if (name === "password") setStrength(zxcvbn(value).score);
+    if (name === "country") {
+      const found = countryList.find((c) => c.name === value);
+      if (found) setPhoneCountry(found.code);
     }
   };
 
-  const handlePhoneChange = (value, countryData) => {
-    setForm({
-      ...form,
-      phone: "+" + value,
-      country: countryData?.name || form.country,
-    });
-    setSelectedCountryCode(countryData?.countryCode?.toLowerCase() || "us");
+  const handlePhone = (value, data) => {
+    setForm({ ...form, phone: "+" + value, country: data?.name || form.country });
+    setPhoneCountry(data?.countryCode?.toLowerCase() || "ke");
   };
 
-  // ✅ Updated handleSubmit
+  const strengthLabel = ["Weak", "Fair", "Good", "Strong", "Very Strong"];
+  const strengthColor = ["text-red-500", "text-orange-400", "text-yellow-500", "text-green-500", "text-green-600"];
+  const strengthBar = ["w-1/5 bg-red-400", "w-2/5 bg-orange-400", "w-3/5 bg-yellow-400", "w-4/5 bg-green-400", "w-full bg-green-500"];
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (form.password !== form.confirmPassword) return setMsg("Passwords do not match.");
+    if (!form.agreedToTerms) return setMsg("Please accept the terms.");
+    setLoading(true);
+    setMsg("");
     try {
-      if (form.password !== form.confirmPassword) {
-        setMessage("Passwords do not match");
-        return;
-      }
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/register",
-        form
-      );
-
-      // ✅ Save email for VerifyEmail.jsx (needed for resend button)
+      await register(form);
       localStorage.setItem("pendingEmail", form.email);
-
-      // Save message for VerifyEmail page
-localStorage.setItem(
-  "verifyMessage",
-  "🎉 Registration successful! We've sent a verification email to your inbox. Please check your email or spam folder."
-);
-
-      // ✅ Redirect only to verify-email (do NOT navigate to login here)
       navigate("/verify-email");
-
-      setMessage(res.data.message);
     } catch (err) {
-      setMessage(err.response?.data?.message || "Error registering user");
+      setMsg(err.response?.data?.message || "Registration failed.");
     }
+    setLoading(false);
   };
 
   return (
-    <div className="register-container">
-      <div className="register-box">
-        <h2>Register</h2>
-        {message && <p className="message">{message}</p>}
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            name="fullName"
-            placeholder="Full Name"
-            value={form.fullName}
-            onChange={handleChange}
-            required
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email Address"
-            value={form.email}
-            onChange={handleChange}
-            required
-          />
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center px-4 py-8">
+      <div className="bg-white w-full max-w-sm rounded-2xl shadow-lg p-6">
+        <div className="flex flex-col items-center mb-5">
+          <img src={logo} alt="MarineCash" className="w-14 h-14 rounded-full mb-2" />
+          <h1 className="text-2xl font-extrabold text-orange-500">Create Account</h1>
+          <p className="text-gray-400 text-sm">Join MarineCash and start earning</p>
+        </div>
 
-          {/* Country Dropdown */}
-          <select
-            name="country"
-            value={form.country}
-            onChange={handleChange}
-            required
-          >
-            <option value="">Select Country</option>
-            {countryList.map((c) => (
-              <option key={c.code} value={c.name}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+        {msg && (
+          <div className="bg-red-50 border border-red-300 text-red-600 text-sm rounded-xl p-3 mb-4 text-center">
+            {msg}
+          </div>
+        )}
 
-          {/* PhoneInput synced with dropdown */}
-          <PhoneInput
-            country={selectedCountryCode}
-            value={form.phone}
-            onChange={handlePhoneChange}
-            inputStyle={{ width: "100%" }}
-            enableSearch={true}
-          />
-
-          {/* Password with Eye Toggle */}
-          <div className="password-input">
+        <form onSubmit={handleSubmit} className="space-y-3">
+          {/* Full Name */}
+          <div>
+            <label className="text-xs font-semibold text-gray-500">Full Name</label>
             <input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={handleChange}
-              required
+              type="text" name="fullName" value={form.fullName}
+              onChange={handleChange} placeholder="John Doe" required
+              className="w-full border-2 border-gray-200 focus:border-orange-400 rounded-xl px-4 py-2.5 text-sm mt-1 outline-none transition"
             />
-            <span
-              className="eye-icon"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? <FaEyeSlash /> : <FaEye />}
-            </span>
           </div>
 
-          {strength !== null && (
-            <div className="password-strength">
-              Strength:{" "}
-              <span
-                className={
-                  strength < 2 ? "weak" : strength < 4 ? "fair" : "strong"
-                }
-              >
-                {["Weak", "Fair", "Good", "Strong", "Very Strong"][strength]}
-              </span>
+          {/* Email */}
+          <div>
+            <label className="text-xs font-semibold text-gray-500">Email</label>
+            <input
+              type="email" name="email" value={form.email}
+              onChange={handleChange} placeholder="your@email.com" required
+              className="w-full border-2 border-gray-200 focus:border-orange-400 rounded-xl px-4 py-2.5 text-sm mt-1 outline-none transition"
+            />
+          </div>
+
+          {/* Country */}
+          <div>
+            <label className="text-xs font-semibold text-gray-500">Country</label>
+            <select
+              name="country" value={form.country} onChange={handleChange} required
+              className="w-full border-2 border-gray-200 focus:border-orange-400 rounded-xl px-4 py-2.5 text-sm mt-1 outline-none transition bg-white"
+            >
+              <option value="">Select Country</option>
+              {countryList.map((c) => (
+                <option key={c.code} value={c.name}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label className="text-xs font-semibold text-gray-500">Phone</label>
+            <div className="mt-1">
+              <PhoneInput
+                country={phoneCountry}
+                value={form.phone}
+                onChange={handlePhone}
+                enableSearch
+                inputStyle={{
+                  width: "100%", border: "2px solid #e5e7eb",
+                  borderRadius: "12px", fontSize: "14px", padding: "10px 10px 10px 48px",
+                }}
+                buttonStyle={{ border: "none", background: "transparent" }}
+              />
             </div>
-          )}
-
-          {/* Confirm Password with Eye Toggle */}
-          <div className="password-input">
-            <input
-              type={showConfirmPassword ? "text" : "password"}
-              name="confirmPassword"
-              placeholder="Confirm Password"
-              value={form.confirmPassword}
-              onChange={handleChange}
-              required
-            />
-            <span
-              className="eye-icon"
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            >
-              {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-            </span>
           </div>
 
-          <label className="terms">
+          {/* Password */}
+          <div>
+            <label className="text-xs font-semibold text-gray-500">Password</label>
+            <div className="relative mt-1">
+              <input
+                type={showPw ? "text" : "password"} name="password"
+                value={form.password} onChange={handleChange}
+                placeholder="••••••••" required
+                className="w-full border-2 border-gray-200 focus:border-orange-400 rounded-xl px-4 py-2.5 text-sm outline-none transition pr-10"
+              />
+              <button type="button" onClick={() => setShowPw(!showPw)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <i className={`fas ${showPw ? "fa-eye-slash" : "fa-eye"}`}></i>
+              </button>
+            </div>
+            {strength !== null && (
+              <div className="mt-1">
+                <div className="h-1.5 bg-gray-200 rounded-full">
+                  <div className={`h-1.5 rounded-full transition-all ${strengthBar[strength]}`}></div>
+                </div>
+                <p className={`text-xs mt-0.5 font-semibold ${strengthColor[strength]}`}>
+                  {strengthLabel[strength]}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Confirm Password */}
+          <div>
+            <label className="text-xs font-semibold text-gray-500">Confirm Password</label>
+            <div className="relative mt-1">
+              <input
+                type={showCpw ? "text" : "password"} name="confirmPassword"
+                value={form.confirmPassword} onChange={handleChange}
+                placeholder="••••••••" required
+                className="w-full border-2 border-gray-200 focus:border-orange-400 rounded-xl px-4 py-2.5 text-sm outline-none transition pr-10"
+              />
+              <button type="button" onClick={() => setShowCpw(!showCpw)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <i className={`fas ${showCpw ? "fa-eye-slash" : "fa-eye"}`}></i>
+              </button>
+            </div>
+          </div>
+
+          {/* Terms */}
+          <label className="flex items-start gap-2 cursor-pointer">
             <input
-              type="checkbox"
-              checked={form.agreedToTerms}
-              onChange={(e) =>
-                setForm({ ...form, agreedToTerms: e.target.checked })
-              }
-              required
+              type="checkbox" name="agreedToTerms"
+              checked={form.agreedToTerms} onChange={handleChange}
+              className="mt-0.5 accent-orange-500"
             />
-            I agree to the{" "}
-            <Link to="/terms" className="terms-link">
-              Terms & Conditions
-            </Link>
+            <span className="text-xs text-gray-500">
+              I agree to the{" "}
+              <Link to="/terms" className="text-orange-500 font-semibold hover:underline">
+                Terms & Conditions
+              </Link>
+            </span>
           </label>
 
-          <button type="submit">Register</button>
+          <button
+            type="submit" disabled={loading}
+            className="w-full bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold py-3 rounded-xl transition-all text-sm mt-2"
+          >
+            {loading ? "Creating Account..." : "Register"}
+          </button>
         </form>
 
-        <p className="login-text">
+        <p className="text-center text-sm text-gray-500 mt-4">
           Already have an account?{" "}
-          <Link to="/login" className="login-link">
-            Login
-          </Link>
+          <Link to="/login" className="text-orange-500 font-bold hover:underline">Login</Link>
         </p>
       </div>
     </div>
