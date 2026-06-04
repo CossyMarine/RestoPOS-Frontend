@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { resendVerify } from "../api/index";
+import API from "../api/axios";
 import logo from "../Assets/logo.png";
 
 const VerifyEmail = () => {
@@ -9,19 +9,17 @@ const VerifyEmail = () => {
   const status = searchParams.get("status");
   const email  = localStorage.getItem("pendingEmail");
   const [resending, setResending] = useState(false);
-  const [msg, setMsg] = useState("");
+  const [msg, setMsg]             = useState("");
 
   useEffect(() => {
-    if (status === "success") {
-      localStorage.removeItem("pendingEmail");
-    }
+    if (status === "success") localStorage.removeItem("pendingEmail");
   }, [status]);
 
   const handleResend = async () => {
     if (!email) return setMsg("No email found. Please register again.");
     setResending(true);
     try {
-      await resendVerify(email);
+      await API.post("/auth/resend-verification", { email });
       setMsg("✅ Verification email resent! Check your inbox.");
     } catch {
       setMsg("❌ Failed to resend. Try again.");
