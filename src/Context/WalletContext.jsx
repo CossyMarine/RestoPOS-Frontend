@@ -1,6 +1,5 @@
-// src/Context/WalletContext.jsx
 import React, { createContext, useState, useEffect, useContext } from "react";
-import { getWallet, withdrawAmount } from "../api/index.js;  
+import API from "../api/axios";
 import { AuthContext } from "./AuthContext";
 
 export const WalletContext = createContext();
@@ -15,14 +14,12 @@ export const WalletProvider = ({ children }) => {
     totalWithdrawn: 0,
     withdrawalHistory: [],
   });
-
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError]     = useState(null);
 
   const updateWallet = (updates) =>
     setWallet((prev) => ({ ...prev, ...updates }));
 
-  // ✅ Fetch wallet
   useEffect(() => {
     if (!user || !token) return;
 
@@ -30,8 +27,8 @@ export const WalletProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       try {
-        const data = await getWallet();   // ✅ matches walletApi.js
-        setWallet(data);
+        const res = await API.get("/wallet");
+        setWallet(res.data);
       } catch (err) {
         console.error("Failed to fetch wallet:", err);
         setError(err.response?.data?.message || "Failed to fetch wallet");
@@ -45,16 +42,15 @@ export const WalletProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [user, token]);
 
-  // ✅ Withdraw
   const withdraw = async (amount) => {
     try {
-      const data = await withdrawAmount(amount);   // ✅ matches walletApi.js
+      const res = await API.post("/wallet/withdraw", { amount });
       updateWallet({
-        balance: data.balance,
-        totalWithdrawn: data.totalWithdrawn,
-        withdrawalHistory: data.withdrawalHistory,
+        balance: res.data.balance,
+        totalWithdrawn: res.data.totalWithdrawn,
+        withdrawalHistory: res.data.withdrawalHistory,
       });
-      return data;
+      return res.data;
     } catch (err) {
       console.error("Withdraw failed:", err);
       throw err;
@@ -62,9 +58,7 @@ export const WalletProvider = ({ children }) => {
   };
 
   return (
-    <WalletContext.Provider
-      value={{ wallet, setWallet, updateWallet, withdraw, loading, error }}
-    >
+    <WalletContext.Provider value={{ wallet, setWallet, updateWallet, withdraw, loading, error }}>
       {children}
     </WalletContext.Provider>
   );
