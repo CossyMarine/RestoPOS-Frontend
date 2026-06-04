@@ -1,19 +1,19 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { forgotPassword } from "../api/index";
+import API from "../api/axios";
 import logo from "../Assets/logo.png";
 
 const ForgotPassword = () => {
-  const [email, setEmail]   = useState("");
-  const [msg, setMsg]       = useState({ text: "", success: true });
+  const [email, setEmail]     = useState("");
+  const [msg, setMsg]         = useState({ text: "", success: true });
   const [loading, setLoading] = useState(false);
-  const [sent, setSent]     = useState(false);
+  const [sent, setSent]       = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await forgotPassword(email);
+      await API.post("/auth/forgot-password", { email });
       setSent(true);
       setMsg({ text: "✅ Reset link sent! Check your email.", success: true });
     } catch (err) {
@@ -45,17 +45,13 @@ const ForgotPassword = () => {
             <div>
               <label className="text-xs font-semibold text-gray-500">Email Address</label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                required
+                type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com" required
                 className="w-full border-2 border-gray-200 focus:border-orange-400 rounded-xl px-4 py-3 text-sm mt-1 outline-none transition"
               />
             </div>
             <button
-              type="submit"
-              disabled={loading}
+              type="submit" disabled={loading}
               className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl text-sm transition disabled:opacity-50"
             >
               {loading ? "Sending..." : "Send Reset Link"}
