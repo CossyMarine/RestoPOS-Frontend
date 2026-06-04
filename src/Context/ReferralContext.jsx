@@ -1,7 +1,6 @@
-// src/Context/ReferralContext.jsx
 import React, { createContext, useState, useContext } from "react";
-import axiosApi from "../api/axiosApi";
 import { AuthContext } from "./AuthContext";
+import { getReferralStats } from "../api/index";
 
 export const ReferralContext = createContext();
 
@@ -14,10 +13,10 @@ export const ReferralProvider = ({ children }) => {
     if (!user) return;
     setLoading(true);
     try {
-      const res = await axiosApi.get("/referrals/me");
-      setStats(res.data);
+      const data = await getReferralStats();
+      setStats(data);
     } catch (err) {
-      console.error("Referral fetch failed:", err);
+      console.error("Referral fetch failed:", err.message);
     }
     setLoading(false);
   };
