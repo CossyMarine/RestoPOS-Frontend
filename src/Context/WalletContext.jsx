@@ -1,6 +1,6 @@
 // src/Context/WalletContext.jsx
 import React, { createContext, useState, useEffect, useContext } from "react";
-import { getWallet, withdrawAmount } from "../api/walletApi";  // ✅ FIXED
+import { getWallet, withdrawAmount } from "../api/index.js;  
 import { AuthContext } from "./AuthContext";
 
 export const WalletContext = createContext();
