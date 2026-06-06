@@ -17,8 +17,13 @@ const Login = () => {
     setLoading(true);
     setMsg("");
     try {
-      await login(form);
-      navigate("/home");
+      const res = await login(form);
+      const role = res.user?.role;
+      if (role === "admin" || role === "superadmin") {
+        navigate("/admin");
+      } else {
+        navigate("/home");
+      }
     } catch (err) {
       setMsg(err.response?.data?.message || "Login failed. Try again.");
     }
@@ -29,7 +34,12 @@ const Login = () => {
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center px-4">
       <div className="bg-white w-full max-w-sm rounded-2xl shadow-lg p-6">
         <div className="flex flex-col items-center mb-6">
-          <img src={logo} alt="MarineCash" className="w-16 h-16 rounded-full mb-2" />
+          <img
+            src={logo}
+            alt="MarineCash"
+            style={{ width: "64px", height: "64px", borderRadius: "50%", objectFit: "cover" }}
+            className="mb-2"
+          />
           <h1 className="text-2xl font-extrabold text-orange-500">MarineCash</h1>
           <p className="text-gray-400 text-sm">Sign in to your account</p>
         </div>
@@ -52,6 +62,7 @@ const Login = () => {
               className="w-full border-2 border-gray-200 focus:border-orange-400 rounded-xl px-4 py-3 text-sm mt-1 outline-none transition"
             />
           </div>
+
           <div>
             <label className="text-xs font-semibold text-gray-500">Password</label>
             <div className="relative mt-1">
