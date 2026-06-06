@@ -1,10 +1,8 @@
 // src/Pages/AdminRewardCodes.jsx
-import React, { useState, useEffect, useCallback, useContext } from "react";
-import { AuthContext } from "../Context/AuthContext";
-import { getAllCodes, createRewardCode, deactivateRewardCode } from "../api/rewardApi";
+import React, { useState, useEffect, useCallback } from "react";
+import API from "../api/axios";
 
 const AdminRewardCodes = () => {
-  const { token } = useContext(AuthContext);
   const [codes, setCodes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [newCode, setNewCode] = useState({
@@ -17,27 +15,25 @@ const AdminRewardCodes = () => {
     customCode: "",
   });
 
-  // ✅ Fetch codes
   const fetchCodes = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getAllCodes(token);
+      const res = await API.get("/reward-codes");
       setCodes(res.data.rewardCodes || res.data);
     } catch (err) {
       console.error("Failed to fetch codes:", err);
     } finally {
       setLoading(false);
     }
-  }, [token]); // dependency is token
+  }, []);
 
   useEffect(() => {
     fetchCodes();
-  }, [fetchCodes]); // fetchCodes is now stable thanks to useCallback
+  }, [fetchCodes]);
 
-  // ✅ Create new code
   const handleCreate = async () => {
     try {
-      await createRewardCode(newCode, token);
+      await API.post("/reward-codes", newCode);
       setNewCode({
         rewardType: "fixed",
         fixedReward: "",
@@ -47,17 +43,16 @@ const AdminRewardCodes = () => {
         expiresAt: "",
         customCode: "",
       });
-      fetchCodes(); // refresh list
+      fetchCodes();
     } catch (err) {
       console.error("Failed to create code:", err);
     }
   };
 
-  // ✅ Deactivate code
   const handleDeactivate = async (id) => {
     try {
-      await deactivateRewardCode(id, token);
-      fetchCodes(); // refresh list
+      await API.patch(`/reward-codes/${id}/deactivate`);
+      fetchCodes();
     } catch (err) {
       console.error("Failed to deactivate code:", err);
     }
@@ -128,7 +123,9 @@ const AdminRewardCodes = () => {
                   <td>{code.isActive ? "✅" : "❌"}</td>
                   <td>
                     {code.isActive && (
-                      <button onClick={() => handleDeactivate(code._id)}>Deactivate</button>
+                      <button onClick={() => handleDeactivate(code._id)}>
+                        Deactivate
+                      </button>
                     )}
                   </td>
                 </tr>
