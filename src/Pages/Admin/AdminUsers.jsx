@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { adminGetUsers, adminBlockUser, adminAssignBadge, adminGetSettings } from "../../api/index";
+import API from "../../api/axios";
 
 const AdminUsers = () => {
-  const [users, setUsers]     = useState([]);
-  const [total, setTotal]     = useState(0);
-  const [search, setSearch]   = useState("");
-  const [page, setPage]       = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [msg, setMsg]         = useState("");
-  const [badgeTiers, setBadgeTiers] = useState([]);
-  const [badgeModal, setBadgeModal] = useState(null);
+  const [users, setUsers]         = useState([]);
+  const [total, setTotal]         = useState(0);
+  const [search, setSearch]       = useState("");
+  const [page, setPage]           = useState(1);
+  const [loading, setLoading]     = useState(true);
+  const [msg, setMsg]             = useState("");
+  const [badgeTiers, setBadgeTiers]   = useState([]);
+  const [badgeModal, setBadgeModal]   = useState(null);
   const [selectedBadge, setSelectedBadge] = useState("");
 
   const flash = (text) => { setMsg(text); setTimeout(() => setMsg(""), 3000); };
@@ -17,16 +17,16 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const res = await adminGetUsers({ search, page, limit: 15 });
-      setUsers(res.users || []);
-      setTotal(res.total || 0);
+      const res = await API.get("/admin/users", { params: { search, page, limit: 15 } });
+      setUsers(res.data.users || []);
+      setTotal(res.data.total || 0);
     } catch (e) { console.error(e); }
     setLoading(false);
   };
 
   useEffect(() => {
-    adminGetSettings()
-      .then((s) => setBadgeTiers(s.badgeTiers || []))
+    API.get("/admin/settings")
+      .then((res) => setBadgeTiers(res.data.badgeTiers || []))
       .catch(console.error);
   }, []);
 
@@ -34,7 +34,7 @@ const AdminUsers = () => {
 
   const handleBlock = async (userId, currentlyBlocked) => {
     try {
-      await adminBlockUser({ userId, action: currentlyBlocked ? "unblock" : "block" });
+      await API.post("/admin/block-user", { userId, action: currentlyBlocked ? "unblock" : "block" });
       flash(`User ${currentlyBlocked ? "unblocked" : "blocked"} ✅`);
       fetchUsers();
     } catch (e) { flash("❌ " + (e.response?.data?.message || "Action failed")); }
@@ -44,7 +44,11 @@ const AdminUsers = () => {
     if (!badgeModal || !selectedBadge) return;
     try {
       const tier = badgeTiers.find((t) => t.name === selectedBadge);
-      await adminAssignBadge({ userId: badgeModal._id, badge: tier?.badgeImage || "", referralLevel: badgeTiers.indexOf(tier) + 1 });
+      await API.post("/admin/assign-badge", {
+        userId: badgeModal._id,
+        badge: tier?.badgeImage || "",
+        referralLevel: badgeTiers.indexOf(tier) + 1,
+      });
       flash(`Badge assigned to ${badgeModal.fullName} ✅`);
       setBadgeModal(null);
       fetchUsers();
