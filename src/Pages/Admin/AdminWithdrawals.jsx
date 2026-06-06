@@ -1,5 +1,6 @@
+//src/Pages/Admin/AdminWithdrawals.jsx
 import React, { useEffect, useState } from "react";
-import { adminGetWithdrawals, adminProcessWithdrawal } from "../../api/index";
+import API from "../../api/axios";
 
 const AdminWithdrawals = () => {
   const [withdrawals, setWithdrawals] = useState([]);
@@ -9,8 +10,8 @@ const AdminWithdrawals = () => {
   const flash = (t, s = true) => { setMsg({ text: t, success: s }); setTimeout(() => setMsg({ text: "", success: true }), 3000); };
 
   const fetchWithdrawals = () => {
-    adminGetWithdrawals()
-      .then(setWithdrawals)
+    API.get("/admin/withdrawals")
+      .then((res) => setWithdrawals(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));
   };
@@ -19,13 +20,13 @@ const AdminWithdrawals = () => {
 
   const handleProcess = async (userId, withdrawalIndex, status) => {
     try {
-      await adminProcessWithdrawal({ userId, withdrawalIndex, status });
+      await API.post("/admin/withdrawals/process", { userId, withdrawalIndex, status });
       flash(`Withdrawal ${status} ✅`);
       fetchWithdrawals();
     } catch (e) { flash("❌ " + (e.response?.data?.message || "Failed."), false); }
   };
 
-  const pending = withdrawals.filter((w) => w.status === "pending");
+  const pending   = withdrawals.filter((w) => w.status === "pending");
   const processed = withdrawals.filter((w) => w.status !== "pending");
 
   return (
