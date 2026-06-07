@@ -1,9 +1,10 @@
 import React, { useState, useContext, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, NavLink } from "react-router-dom";
 import API from "../api/axios";
 import TopBar from "../Components/TopBar";
 import BottomNav from "../Components/BottomNav";
 import { WalletContext } from "../Context/WalletContext";
+import { ProofBadgeContext } from "../Context/ProofBadgeContext";
 
 const CATEGORIES = [
   { value: "survey",      label: "Surveys",      icon: "fa-clipboard-list" },
@@ -25,13 +26,14 @@ const INIT = {
 export default function PostTask() {
   const navigate = useNavigate();
   const { wallet, fetchWallet } = useContext(WalletContext);
+  const { ownerPendingCount, formatBadge } = useContext(ProofBadgeContext);
   const [form, setForm]         = useState(INIT);
   const [saving, setSaving]     = useState(false);
   const [msg, setMsg]           = useState({ text: "", success: true });
   const [settings, setSettings] = useState(null);
 
   // Image gallery state
-  const [imageFiles, setImageFiles]     = useState([]); // { file, previewUrl, uploading, url }
+  const [imageFiles, setImageFiles] = useState([]);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -68,7 +70,6 @@ export default function PostTask() {
 
     setImageFiles((prev) => [...prev, ...newEntries]);
 
-    // Upload each to backend
     for (const entry of newEntries) {
       try {
         const reader = new FileReader();
@@ -88,7 +89,6 @@ export default function PostTask() {
         );
       }
     }
-    // Reset input so same file can be re-selected
     e.target.value = "";
   };
 
@@ -138,6 +138,32 @@ export default function PostTask() {
     <div className="bg-gray-100 min-h-screen pb-28">
       <TopBar />
 
+      {/* ── Task Status quick-link ── */}
+      <div className="mx-3 mt-4">
+        <NavLink
+          to="/task-status"
+          className="flex items-center justify-between bg-white rounded-2xl shadow px-4 py-3 hover:bg-orange-50 transition group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center">
+              <i className="fas fa-chart-bar text-orange-500 text-sm"></i>
+            </div>
+            <div>
+              <p className="text-sm font-extrabold text-gray-800">Task Status</p>
+              <p className="text-xs text-gray-400">View your campaigns & review proofs</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {ownerPendingCount > 0 && (
+              <span className="min-w-[22px] h-[22px] bg-red-500 text-white text-[11px] font-extrabold rounded-full flex items-center justify-center px-1 shadow-md animate-bounce">
+                {formatBadge(ownerPendingCount)}
+              </span>
+            )}
+            <i className="fas fa-chevron-right text-gray-400 text-xs group-hover:text-orange-500 transition"></i>
+          </div>
+        </NavLink>
+      </div>
+
       <div className="mx-3 mt-4 space-y-4">
         <div className="bg-white rounded-2xl shadow p-5">
           <h1 className="text-base font-extrabold text-gray-800 mb-1">📢 Post a Campaign</h1>
@@ -184,8 +210,8 @@ export default function PostTask() {
         <div className="bg-white rounded-2xl shadow p-4 space-y-3">
           <p className="text-sm font-bold text-gray-700">Campaign Details</p>
           {[
-            { key: "title",     label: "Title",              placeholder: "e.g. Follow us on Instagram", type: "text" },
-            { key: "targetUrl", label: "Link / URL (optional)", placeholder: "https://...",               type: "url"  },
+            { key: "title",     label: "Title",               placeholder: "e.g. Follow us on Instagram", type: "text" },
+            { key: "targetUrl", label: "Link / URL (optional)", placeholder: "https://...",                type: "url"  },
           ].map(({ key, label, placeholder, type }) => (
             <div key={key}>
               <label className="text-xs font-semibold text-gray-500">{label}</label>
@@ -251,7 +277,6 @@ export default function PostTask() {
                 </div>
               ))}
 
-              {/* Add image button */}
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="w-20 h-20 border-2 border-dashed border-orange-300 rounded-xl flex flex-col items-center justify-center text-orange-400 hover:bg-orange-50 transition"
@@ -324,9 +349,9 @@ export default function PostTask() {
             <div className="bg-orange-50 rounded-xl p-4 space-y-1.5 text-sm">
               <p className="font-bold text-orange-600 mb-2">💰 Cost Breakdown</p>
               {[
-                ["Payout Budget",              `$${payoutBudget.toFixed(4)}`],
-                [`Platform Fee (${feePct}%)`,  `$${feeAmount.toFixed(4)}`],
-                ["Total Deducted on Submit",   `$${escrowRequired.toFixed(4)}`],
+                ["Payout Budget",             `$${payoutBudget.toFixed(4)}`],
+                [`Platform Fee (${feePct}%)`, `$${feeAmount.toFixed(4)}`],
+                ["Total Deducted on Submit",  `$${escrowRequired.toFixed(4)}`],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between">
                   <span className="text-gray-500 text-xs">{k}</span>
@@ -363,4 +388,4 @@ export default function PostTask() {
       <BottomNav />
     </div>
   );
-                }
+      }
