@@ -11,7 +11,7 @@ export const ChatProvider = ({ children }) => {
   const [typingUsers, setTypingUsers] = useState([]);
   const [isClosed, setIsClosed]       = useState(false);
   const [loading, setLoading]         = useState(true);
-  const [banInfo, setBanInfo]         = useState(null); // { expiresAt }
+  const [banInfo, setBanInfo]         = useState(null);
 
   // ── Load history ─────────────────────────────────────────────────
   useEffect(() => {
@@ -29,8 +29,13 @@ export const ChatProvider = ({ children }) => {
   useEffect(() => {
     if (!user) return;
 
-    socket.connect();
-    socket.emit("join_room", { userId: user._id, role: user.role });
+    try {
+      socket.connect();
+      socket.emit("join_room", { userId: user._id, role: user.role });
+    } catch (err) {
+      console.error("Socket connect error:", err);
+      return;
+    }
 
     const onMessage = (msg) => {
       setMessages((prev) => {
@@ -92,11 +97,11 @@ export const ChatProvider = ({ children }) => {
     };
   }, [user]);
 
-  // ── Send text ─────────────────────────────────────────────────────
-  const sendMessage = useCallback(async (content) => {
+  // ── Send text (with optional replyToId) ──────────────────────────
+  const sendMessage = useCallback(async (content, replyToId = null) => {
     if (!content.trim() || !user) return null;
     try {
-      const res = await API.post("/chat/message", { content });
+      const res = await API.post("/chat/message", { content, replyToId });
       return res.data;
     } catch (err) {
       const msg = err.response?.data?.error || "Failed to send message.";
@@ -104,11 +109,12 @@ export const ChatProvider = ({ children }) => {
     }
   }, [user]);
 
-  // ── Send image ────────────────────────────────────────────────────
-  const sendImage = useCallback(async (file) => {
+  // ── Send image (with optional replyToId) ─────────────────────────
+  const sendImage = useCallback(async (file, replyToId = null) => {
     if (!file || !user) return null;
     const fd = new FormData();
     fd.append("image", file);
+    if (replyToId) fd.append("replyToId", replyToId);
     try {
       const res = await API.post("/chat/message/image", fd, {
         headers: { "Content-Type": "multipart/form-data" },
