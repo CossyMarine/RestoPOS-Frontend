@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import API from "../api/axios";
 import TopBar from "../Components/TopBar";
 import BottomNav from "../Components/BottomNav";
@@ -7,32 +7,33 @@ import { WalletContext } from "../Context/WalletContext";
 
 const STATUS_COLORS = {
   pending_approval: "bg-yellow-100 text-yellow-700",
-  draft:    "bg-blue-100 text-blue-700",
-  active:   "bg-green-100 text-green-700",
-  paused:   "bg-gray-100 text-gray-600",
-  exhausted:"bg-orange-100 text-orange-700",
-  stopped:  "bg-red-100 text-red-500",
-  rejected: "bg-red-100 text-red-700",
+  active:           "bg-green-100 text-green-700",
+  paused:           "bg-gray-100 text-gray-600",
+  exhausted:        "bg-orange-100 text-orange-700",
+  stopped:          "bg-red-100 text-red-500",
+  rejected:         "bg-red-100 text-red-700",
 };
 
 const SUB_COLORS = {
-  pending:      "bg-yellow-100 text-yellow-700",
-  approved:     "bg-green-100 text-green-600",
-  auto_approved:"bg-green-100 text-green-600",
-  rejected:     "bg-red-100 text-red-600",
+  pending:       "bg-yellow-100 text-yellow-700",
+  approved:      "bg-green-100 text-green-600",
+  auto_approved: "bg-green-100 text-green-600",
+  rejected:      "bg-red-100 text-red-600",
 };
 
 export default function TaskStatus() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { wallet, fetchWallet } = useContext(WalletContext);
-  const [campaigns, setCampaigns] = useState([]);
-  const [loading, setLoading]     = useState(true);
-  const [expanded, setExpanded]   = useState(null);
-  const [detail, setDetail]       = useState({});
-  const [topUpId, setTopUpId]     = useState(null);
-  const [topUpAmount, setTopUpAmount] = useState("");
-  const [msg, setMsg]             = useState({ text: "", success: true });
-  const [tab, setTab]             = useState("mine"); // mine | browse
+
+  const [campaigns, setCampaigns]         = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [expanded, setExpanded]           = useState(null);
+  const [detail, setDetail]               = useState({});
+  const [topUpId, setTopUpId]             = useState(null);
+  const [topUpAmount, setTopUpAmount]     = useState("");
+  const [msg, setMsg]                     = useState({ text: "", success: true });
+  const [tab, setTab]                     = useState("mine");
 
   const flash = (t, s = true) => {
     setMsg({ text: t, success: s });
@@ -44,11 +45,24 @@ export default function TaskStatus() {
     try {
       const res = await API.get("/campaign/mine");
       setCampaigns(res.data.items || []);
-    } catch { flash("❌ Failed to load your campaigns.", false); }
+    } catch {
+      flash("❌ Failed to load your campaigns.", false);
+    }
     setLoading(false);
   };
 
-  useEffect(() => { if (tab === "mine") fetchMine(); }, [tab]);
+  useEffect(() => {
+    if (tab === "mine") fetchMine();
+  }, [tab]);
+
+  // Auto-open submit flow if redirected from Campaigns page
+  useEffect(() => {
+    const submitId = searchParams.get("submit");
+    if (submitId) {
+      setTab("mine");
+      setExpanded(submitId);
+    }
+  }, [searchParams]);
 
   const openDetail = async (id) => {
     if (expanded === id) { setExpanded(null); return; }
@@ -61,17 +75,9 @@ export default function TaskStatus() {
     }
   };
 
-  const handleFund = async (id) => {
-    try {
-      await API.put(`/campaign/${id}/fund-activate`);
-      flash("✅ Campaign funded & activated!");
-      fetchMine();
-      if (fetchWallet) fetchWallet();
-    } catch (e) { flash("❌ " + (e.response?.data?.message || "Failed."), false); }
-  };
-
   const handleTopUp = async (id) => {
-    if (!topUpAmount || Number(topUpAmount) <= 0) return flash("❌ Enter a valid top-up amount.", false);
+    if (!topUpAmount || Number(topUpAmount) <= 0)
+      return flash("❌ Enter a valid top-up amount.", false);
     try {
       await API.put(`/campaign/${id}/fund-activate`, { topUpAmount: Number(topUpAmount) });
       flash("✅ Campaign topped up & reactivated!");
@@ -79,7 +85,9 @@ export default function TaskStatus() {
       setTopUpAmount("");
       fetchMine();
       if (fetchWallet) fetchWallet();
-    } catch (e) { flash("❌ " + (e.response?.data?.message || "Failed."), false); }
+    } catch (e) {
+      flash("❌ " + (e.response?.data?.message || "Failed."), false);
+    }
   };
 
   const handleAction = async (id, action) => {
@@ -87,18 +95,25 @@ export default function TaskStatus() {
       await API.put(`/campaign/${id}/${action}`);
       flash(`✅ Campaign ${action}d.`);
       fetchMine();
-    } catch (e) { flash("❌ " + (e.response?.data?.message || "Failed."), false); }
+    } catch (e) {
+      flash("❌ " + (e.response?.data?.message || "Failed."), false);
+    }
   };
 
   const handleSubReview = async (campaignId, subId, action, reason) => {
     try {
-      await API.put(`/campaign/${campaignId}/submissions/${subId}/review`, { action, rejectionReason: reason });
+      await API.put(`/campaign/${campaignId}/submissions/${subId}/review`, {
+        action,
+        rejectionReason: reason,
+      });
       flash(`✅ Submission ${action}d.`);
       const res = await API.get(`/campaign/${campaignId}`);
       setDetail((p) => ({ ...p, [campaignId]: res.data }));
       fetchMine();
       if (fetchWallet) fetchWallet();
-    } catch (e) { flash("❌ " + (e.response?.data?.message || "Failed."), false); }
+    } catch (e) {
+      flash("❌ " + (e.response?.data?.message || "Failed."), false);
+    }
   };
 
   return (
@@ -109,7 +124,9 @@ export default function TaskStatus() {
         <h1 className="text-base font-extrabold text-gray-800">📋 Task Status</h1>
 
         {msg.text && (
-          <div className={`p-3 rounded-xl text-sm font-semibold text-center ${msg.success ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"}`}>
+          <div className={`p-3 rounded-xl text-sm font-semibold text-center ${
+            msg.success ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
+          }`}>
             {msg.text}
           </div>
         )}
@@ -121,7 +138,9 @@ export default function TaskStatus() {
               key={key}
               onClick={() => setTab(key)}
               className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition ${
-                tab === key ? "border-orange-500 bg-orange-50 text-orange-600" : "border-gray-200 text-gray-400"
+                tab === key
+                  ? "border-orange-500 bg-orange-50 text-orange-600"
+                  : "border-gray-200 text-gray-400"
               }`}
             >
               {label}
@@ -129,18 +148,21 @@ export default function TaskStatus() {
           ))}
         </div>
 
+        {/* Browse tab */}
         {tab === "browse" && (
-          <div className="bg-white rounded-2xl shadow p-4 text-center">
-            <p className="text-gray-400 text-sm">Browse active campaigns</p>
+          <div className="bg-white rounded-2xl shadow p-6 text-center space-y-3">
+            <i className="fas fa-briefcase text-4xl text-orange-300"></i>
+            <p className="text-gray-500 text-sm font-semibold">Find active campaigns to complete and earn</p>
             <button
               onClick={() => navigate("/campaigns")}
-              className="mt-3 bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 py-2 rounded-xl text-sm transition"
+              className="mt-1 bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 py-2.5 rounded-xl text-sm transition"
             >
               Browse Campaigns
             </button>
           </div>
         )}
 
+        {/* Mine tab */}
         {tab === "mine" && (
           loading ? (
             <p className="text-center text-orange-500 animate-pulse font-bold py-10 text-sm">Loading...</p>
@@ -172,9 +194,10 @@ export default function TaskStatus() {
                           <p className="text-xs text-gray-400 mt-0.5">
                             {c.category} · ${Number(c.payPerTask).toFixed(3)}/task · {c.approvedCount}/{c.maxEarners} done
                           </p>
-                          <div className="flex items-center gap-2 mt-1">
+
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
                             <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[c.status] || "bg-gray-100 text-gray-500"}`}>
-                              {c.status.replace("_", " ")}
+                              {c.status.replace(/_/g, " ")}
                             </span>
                             {c.pendingCount > 0 && (
                               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700">
@@ -182,29 +205,48 @@ export default function TaskStatus() {
                               </span>
                             )}
                           </div>
+
+                          {/* Status-specific messages */}
                           {c.status === "pending_approval" && (
-                            <p className="text-xs text-yellow-600 mt-1">⏳ Waiting for admin to review your campaign</p>
+                            <p className="text-xs text-yellow-600 font-semibold mt-1.5 bg-yellow-50 rounded-lg px-2 py-1">
+                              ⏳ Funds held · Awaiting admin review
+                            </p>
                           )}
-                          {c.status === "rejected" && c.adminRejectionReason && (
-                            <p className="text-xs text-red-500 mt-1 bg-red-50 rounded-lg px-2 py-1">
-                              Rejected: {c.adminRejectionReason}
+                          {c.status === "rejected" && (
+                            <p className="text-xs text-red-500 font-semibold mt-1.5 bg-red-50 rounded-lg px-2 py-1">
+                              ❌ {c.adminRejectionReason
+                                ? `Rejected: ${c.adminRejectionReason}`
+                                : "Campaign rejected"
+                              } · Funds refunded to your wallet
+                            </p>
+                          )}
+                          {c.status === "active" && (
+                            <p className="text-xs text-green-600 font-semibold mt-1.5">
+                              ✅ Live — users can now complete this task
                             </p>
                           )}
                         </div>
-                        <button
-                          onClick={() => openDetail(c._id)}
-                          className="text-xs font-bold px-3 py-1.5 rounded-xl bg-gray-100 text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition shrink-0"
-                        >
-                          {expanded === c._id ? "Close" : "Manage"}
-                        </button>
+
+                        {/* Only show Manage for non-terminal, non-pending statuses */}
+                        {!["pending_approval", "rejected", "stopped"].includes(c.status) && (
+                          <button
+                            onClick={() => openDetail(c._id)}
+                            className="text-xs font-bold px-3 py-1.5 rounded-xl bg-gray-100 text-gray-600 hover:bg-orange-50 hover:text-orange-600 transition shrink-0"
+                          >
+                            {expanded === c._id ? "Close" : "Manage"}
+                          </button>
+                        )}
                       </div>
 
-                      {/* Budget bar */}
+                      {/* Budget progress bar */}
                       {["active", "paused", "exhausted"].includes(c.status) && (
                         <div className="mt-3">
                           <div className="flex justify-between text-xs text-gray-400 mb-1">
                             <span>Budget used</span>
-                            <span>${Number(c.approvedCount * c.payPerTask).toFixed(3)} / ${Number(c.payoutBudget + c.approvedCount * c.payPerTask).toFixed(3)}</span>
+                            <span>
+                              ${Number(c.approvedCount * c.payPerTask).toFixed(3)} / $
+                              {Number(c.payoutBudget + c.approvedCount * c.payPerTask).toFixed(3)}
+                            </span>
                           </div>
                           <div className="w-full bg-gray-100 rounded-full h-2">
                             <div
@@ -216,38 +258,41 @@ export default function TaskStatus() {
                       )}
                     </div>
 
-                    {/* Actions + Detail */}
+                    {/* Expanded manage panel */}
                     {expanded === c._id && (
                       <div className="border-t border-gray-100 p-4 space-y-4">
-                        {/* Action buttons */}
+
+                        {/* Action buttons — no Fund button anymore */}
                         <div className="flex gap-2 flex-wrap">
-                          {c.status === "draft" && (
-                            <button onClick={() => handleFund(c._id)}
-                              className="bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition">
-                              💰 Fund & Activate
-                            </button>
-                          )}
                           {c.status === "active" && (
-                            <button onClick={() => handleAction(c._id, "pause")}
-                              className="bg-gray-500 hover:bg-gray-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition">
+                            <button
+                              onClick={() => handleAction(c._id, "pause")}
+                              className="bg-gray-500 hover:bg-gray-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition"
+                            >
                               ⏸ Pause
                             </button>
                           )}
                           {c.status === "paused" && (
-                            <button onClick={() => handleAction(c._id, "resume")}
-                              className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition">
+                            <button
+                              onClick={() => handleAction(c._id, "resume")}
+                              className="bg-blue-500 hover:bg-blue-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition"
+                            >
                               ▶ Resume
                             </button>
                           )}
                           {["active", "paused"].includes(c.status) && (
-                            <button onClick={() => handleAction(c._id, "stop")}
-                              className="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition">
+                            <button
+                              onClick={() => handleAction(c._id, "stop")}
+                              className="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition"
+                            >
                               🛑 Stop & Refund
                             </button>
                           )}
                           {c.status === "exhausted" && (
-                            <button onClick={() => setTopUpId(topUpId === c._id ? null : c._id)}
-                              className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition">
+                            <button
+                              onClick={() => setTopUpId(topUpId === c._id ? null : c._id)}
+                              className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition"
+                            >
                               🔄 Top Up Budget
                             </button>
                           )}
@@ -257,16 +302,24 @@ export default function TaskStatus() {
                         {topUpId === c._id && (
                           <div className="bg-orange-50 rounded-xl p-3 space-y-2">
                             <p className="text-xs font-bold text-orange-600">Add more budget</p>
+                            <p className="text-[11px] text-orange-500">Amount will be deducted from your wallet immediately.</p>
                             <input
                               type="number"
                               value={topUpAmount}
                               onChange={(e) => setTopUpAmount(e.target.value)}
                               placeholder="Total amount to add (inc. fee)"
-                              step="0.01" min="0"
+                              step="0.01"
+                              min="0"
                               className="w-full border-2 border-orange-200 focus:border-orange-400 rounded-xl px-3 py-2 text-sm outline-none"
                             />
-                            <button onClick={() => handleTopUp(c._id)}
-                              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded-xl text-xs transition">
+                            <div className="flex justify-between text-[11px] text-gray-400">
+                              <span>Your balance</span>
+                              <span className="font-bold">${Number(wallet?.balance || 0).toFixed(4)}</span>
+                            </div>
+                            <button
+                              onClick={() => handleTopUp(c._id)}
+                              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded-xl text-xs transition"
+                            >
                               Confirm Top Up
                             </button>
                           </div>
@@ -291,7 +344,7 @@ export default function TaskStatus() {
                           </div>
                         )}
 
-                        {/* Summary */}
+                        {/* Stats summary */}
                         <div className="grid grid-cols-3 gap-2 text-xs">
                           {[
                             ["Approved", c.approvedCount, "text-green-600"],
@@ -325,11 +378,24 @@ function SubmissionCard({ sub, onApprove, onReject }) {
 
   return (
     <div className="bg-gray-50 rounded-xl p-3 space-y-2">
-      <p className="text-xs font-bold text-gray-700">{sub.user?.fullName || "User"}</p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-bold text-gray-700">{sub.user?.fullName || "User"}</p>
+        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${SUB_COLORS[sub.status] || "bg-gray-100 text-gray-500"}`}>
+          {sub.status.replace(/_/g, " ")}
+        </span>
+      </div>
       <p className="text-[11px] text-gray-400">{new Date(sub.submittedAt).toLocaleString()}</p>
-      {sub.proofText && <p className="text-xs bg-white rounded-lg p-2 text-gray-600">{sub.proofText}</p>}
+
+      {sub.proofText && (
+        <p className="text-xs bg-white rounded-lg p-2 text-gray-600">{sub.proofText}</p>
+      )}
       {sub.proofUrl && (
-        <a href={sub.proofUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 underline break-all">
+        <a
+          href={sub.proofUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-blue-500 underline break-all"
+        >
           {sub.proofUrl}
         </a>
       )}
@@ -340,16 +406,22 @@ function SubmissionCard({ sub, onApprove, onReject }) {
           ))}
         </div>
       )}
+
       <div className="flex gap-2">
-        <button onClick={onApprove}
-          className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-1.5 rounded-xl text-xs transition">
+        <button
+          onClick={onApprove}
+          className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-1.5 rounded-xl text-xs transition"
+        >
           ✅ Approve
         </button>
-        <button onClick={() => setRejecting(!rejecting)}
-          className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 rounded-xl text-xs transition">
+        <button
+          onClick={() => setRejecting(!rejecting)}
+          className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 rounded-xl text-xs transition"
+        >
           ❌ Reject
         </button>
       </div>
+
       {rejecting && (
         <div className="space-y-1">
           <input
@@ -359,7 +431,13 @@ function SubmissionCard({ sub, onApprove, onReject }) {
             className="w-full border-2 border-red-200 focus:border-red-400 rounded-xl px-3 py-1.5 text-xs outline-none"
           />
           <button
-            onClick={() => { if (reason.trim()) { onReject(reason); setRejecting(false); setReason(""); } }}
+            onClick={() => {
+              if (reason.trim()) {
+                onReject(reason);
+                setRejecting(false);
+                setReason("");
+              }
+            }}
             className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-1.5 rounded-xl text-xs transition"
           >
             Confirm Rejection
@@ -368,4 +446,4 @@ function SubmissionCard({ sub, onApprove, onReject }) {
       )}
     </div>
   );
-}
+                                 }
