@@ -13,7 +13,7 @@ export const ChatProvider = ({ children }) => {
 
   useEffect(() => {
     if (!token) { setLoading(false); return; }
-    API.get("/chat/messages/main")
+    API.get("/chat/messages")
       .then((res) => setMessages(Array.isArray(res.data) ? res.data : []))
       .catch((err) => { console.error("Chat load failed:", err.message); setMessages([]); })
       .finally(() => setLoading(false));
