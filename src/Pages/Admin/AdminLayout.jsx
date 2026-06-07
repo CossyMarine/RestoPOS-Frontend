@@ -2,11 +2,13 @@ import React, { useContext, useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../Context/AuthContext";
 import { ProofBadgeContext } from "../../Context/ProofBadgeContext";
+import { SupportBadgeContext } from "../../Context/SupportBadgeContext";
 import logo from "../../Assets/logo.png";
 
 const AdminLayout = () => {
   const { user, logout } = useContext(AuthContext);
   const { adminPendingCount, formatBadge } = useContext(ProofBadgeContext);
+  const { adminUnread } = useContext(SupportBadgeContext);
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -14,10 +16,10 @@ const AdminLayout = () => {
   const hidden = user?.hiddenSections || [];
 
   const ALL_SECTIONS = [
-    { key: "dashboard",      label: "Dashboard",         icon: "fa-chart-line",     to: "/admin" },
-    { key: "users",          label: "Users",             icon: "fa-users",          to: "/admin/users" },
-    { key: "settings",       label: "Settings",          icon: "fa-sliders",        to: "/admin/settings" },
-    { key: "campaigns",      label: "Campaigns",         icon: "fa-clipboard-list", to: "/admin/campaigns" },
+    { key: "dashboard",       label: "Dashboard",        icon: "fa-chart-line",      to: "/admin" },
+    { key: "users",           label: "Users",            icon: "fa-users",           to: "/admin/users" },
+    { key: "settings",        label: "Settings",         icon: "fa-sliders",         to: "/admin/settings" },
+    { key: "campaigns",       label: "Campaigns",        icon: "fa-clipboard-list",  to: "/admin/campaigns" },
     {
       key: "submitted-proofs",
       label: "Submitted Proofs",
@@ -25,12 +27,19 @@ const AdminLayout = () => {
       to: "/admin/submitted-proofs",
       badge: adminPendingCount,
     },
-    { key: "badges",         label: "Badges",            icon: "fa-medal",          to: "/admin/badges" },
-    { key: "announcements",  label: "Announcements",     icon: "fa-bullhorn",       to: "/admin/announcements" },
-    { key: "faq", label: "FAQ", icon: "fa-circle-question", to: "/admin/faq" },
-    { key: "polls",          label: "Polls",             icon: "fa-poll",           to: "/admin/polls" },
-    { key: "rewards",        label: "Reward Codes",      icon: "fa-gift",           to: "/admin/rewards" },
-    { key: "withdrawals",    label: "Withdrawals",       icon: "fa-money-bill",     to: "/admin/withdrawals" },
+    { key: "badges",          label: "Badges",           icon: "fa-medal",           to: "/admin/badges" },
+    { key: "announcements",   label: "Announcements",    icon: "fa-bullhorn",        to: "/admin/announcements" },
+    { key: "faq",             label: "FAQ",              icon: "fa-circle-question", to: "/admin/faq" },
+    {
+      key: "support",
+      label: "Support",
+      icon: "fa-headset",
+      to: "/admin/support",
+      badge: adminUnread,
+    },
+    { key: "polls",           label: "Polls",            icon: "fa-poll",            to: "/admin/polls" },
+    { key: "rewards",         label: "Reward Codes",     icon: "fa-gift",            to: "/admin/rewards" },
+    { key: "withdrawals",     label: "Withdrawals",      icon: "fa-money-bill",      to: "/admin/withdrawals" },
     {
       key: "permissions",
       label: "Permissions",
