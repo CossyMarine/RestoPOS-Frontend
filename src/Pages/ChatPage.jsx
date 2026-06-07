@@ -1,4 +1,5 @@
-// src/Pages/ChatPage.jsimport React, { useContext, useEffect, useRef, useState, useCallback } from "react";
+// src/Pages/ChatPage.js
+import React, { useContext, useEffect, useRef, useState, useCallback } from "react";
 import { ChatContext } from "../Context/ChatContext";
 import { AuthContext } from "../Context/AuthContext";
 import API from "../api/axios";
