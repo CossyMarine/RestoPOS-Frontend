@@ -7,6 +7,7 @@ const ALL_SECTIONS = [
   { key: "dashboard",     label: "Dashboard",     icon: "fa-chart-line",    to: "/admin" },
   { key: "users",         label: "Users",         icon: "fa-users",         to: "/admin/users" },
   { key: "settings",      label: "Settings",      icon: "fa-sliders",       to: "/admin/settings" },
+  { to: "campaigns", icon: "fa-clipboard-list", label: "Campaigns" }
   { key: "badges",        label: "Badges",        icon: "fa-medal",         to: "/admin/badges" },
   { key: "announcements", label: "Announcements", icon: "fa-bullhorn",      to: "/admin/announcements" },
   { key: "polls",         label: "Polls",         icon: "fa-poll",          to: "/admin/polls" },
