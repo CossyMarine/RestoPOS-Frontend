@@ -1,54 +1,44 @@
-// src/Pages/Register.jsx
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import zxcvbn from "zxcvbn";
-import countries from "i18n-iso-countries";
-import enLocale from "i18n-iso-countries/langs/en.json";
 import { AuthContext } from "../Context/AuthContext";
 import logo from "../Assets/logo.png";
-
-countries.registerLocale(enLocale);
 
 const Register = () => {
   const { register } = useContext(AuthContext);
   const navigate = useNavigate();
+
   const [form, setForm] = useState({
-    fullName: "", email: "", country: "", phone: "",
+    fullName: "", email: "", gender: "",
+    phone: "", phoneCountry: "",
     password: "", confirmPassword: "", agreedToTerms: false,
   });
   const [strength, setStrength] = useState(null);
-  const [showPw, setShowPw] = useState(false);
+  const [showPw, setShowPw]   = useState(false);
   const [showCpw, setShowCpw] = useState(false);
-  const [msg, setMsg] = useState("");
+  const [msg, setMsg]         = useState("");
   const [loading, setLoading] = useState(false);
-  const [countryList, setCountryList] = useState([]);
-  const [phoneCountry, setPhoneCountry] = useState("ke");
-
-  useEffect(() => {
-    const obj = countries.getNames("en", { select: "official" });
-    setCountryList(Object.entries(obj).map(([code, name]) => ({ code: code.toLowerCase(), name })));
-  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm({ ...form, [name]: type === "checkbox" ? checked : value });
     if (name === "password") setStrength(zxcvbn(value).score);
-    if (name === "country") {
-      const found = countryList.find((c) => c.name === value);
-      if (found) setPhoneCountry(found.code);
-    }
   };
 
   const handlePhone = (value, data) => {
-    setForm({ ...form, phone: "+" + value, country: data?.name || form.country });
-    setPhoneCountry(data?.countryCode?.toLowerCase() || "ke");
+    setForm({
+      ...form,
+      phone: "+" + value,
+      // data.name is the full country name e.g. "Nigeria"
+      phoneCountry: data?.name || "",
+    });
   };
 
   const strengthLabel = ["Weak", "Fair", "Good", "Strong", "Very Strong"];
   const strengthColor = ["text-red-500", "text-orange-400", "text-yellow-500", "text-green-500", "text-green-600"];
-  const strengthBar = ["w-1/5 bg-red-400", "w-2/5 bg-orange-400", "w-3/5 bg-yellow-400", "w-4/5 bg-green-400", "w-full bg-green-500"];
+  const strengthBar   = ["w-1/5 bg-red-400", "w-2/5 bg-orange-400", "w-3/5 bg-yellow-400", "w-4/5 bg-green-400", "w-full bg-green-500"];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -102,26 +92,26 @@ const Register = () => {
             />
           </div>
 
-          {/* Country */}
+          {/* Gender */}
           <div>
-            <label className="text-xs font-semibold text-gray-500">Country</label>
+            <label className="text-xs font-semibold text-gray-500">Gender</label>
             <select
-              name="country" value={form.country} onChange={handleChange} required
+              name="gender" value={form.gender} onChange={handleChange} required
               className="w-full border-2 border-gray-200 focus:border-orange-400 rounded-xl px-4 py-2.5 text-sm mt-1 outline-none transition bg-white"
             >
-              <option value="">Select Country</option>
-              {countryList.map((c) => (
-                <option key={c.code} value={c.name}>{c.name}</option>
-              ))}
+              <option value="">Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="prefer_not_to_say">Prefer not to say</option>
             </select>
           </div>
 
           {/* Phone */}
           <div>
-            <label className="text-xs font-semibold text-gray-500">Phone</label>
+            <label className="text-xs font-semibold text-gray-500">Phone Number</label>
             <div className="mt-1">
               <PhoneInput
-                country={phoneCountry}
+                country="ke"
                 value={form.phone}
                 onChange={handlePhone}
                 enableSearch
@@ -132,6 +122,9 @@ const Register = () => {
                 buttonStyle={{ border: "none", background: "transparent" }}
               />
             </div>
+            <p className="text-[10px] text-gray-400 mt-1">
+              Select your country flag and enter your number — this helps us verify your location.
+            </p>
           </div>
 
           {/* Password */}
