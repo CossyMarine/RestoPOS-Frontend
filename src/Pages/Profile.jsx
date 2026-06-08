@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useRef, useState } from "react";
 import { AuthContext } from "../Context/AuthContext";
 import { WalletContext } from "../Context/WalletContext";
 import API from "../api/axios";
@@ -7,14 +7,16 @@ import BottomNav from "../Components/BottomNav";
 export default function Profile() {
   const { user, setUser, logout } = useContext(AuthContext);
   const { wallet } = useContext(WalletContext);
-  const [editMode, setEditMode] = useState(false);
-  const [saving, setSaving]     = useState(false);
-  const [msg, setMsg]           = useState({ text: "", success: true });
-  const [form, setForm]         = useState({
+  const [editMode, setEditMode]       = useState(false);
+  const [saving, setSaving]           = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [msg, setMsg]                 = useState({ text: "", success: true });
+  const [form, setForm]               = useState({
     fullName: user?.fullName || "",
     phone:    user?.phone    || "",
     country:  user?.country  || "",
   });
+  const fileRef = useRef(null);
 
   const flash = (text, success = true) => {
     setMsg({ text, success });
@@ -39,6 +41,25 @@ export default function Profile() {
     setEditMode(false);
   };
 
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    try {
+      const fd = new FormData();
+      fd.append("avatar", file);
+      const res = await API.post("/users/avatar", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setUser((prev) => ({ ...prev, photo: res.data.photo }));
+      flash("✅ Photo updated!");
+    } catch (err) {
+      flash(err.response?.data?.message || "❌ Upload failed.", false);
+    }
+    setUploadingPhoto(false);
+    e.target.value = "";
+  };
+
   const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || "U")}&background=f97316&color=fff&size=128`;
 
   return (
@@ -49,10 +70,33 @@ export default function Profile() {
       </nav>
 
       <div className="bg-white shadow rounded-xl mx-3 mt-4 p-5 flex flex-col items-center text-center">
-        <img
-          src={user?.photo || avatar} alt="Avatar"
-          style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover", border: "3px solid #f97316" }}
-        />
+        {/* Avatar with upload button */}
+        <div className="relative">
+          <img
+            src={user?.photo || avatar}
+            alt="Avatar"
+            style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover", border: "3px solid #f97316" }}
+          />
+          {/* Camera button overlay */}
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={uploadingPhoto}
+            className="absolute bottom-0 right-0 w-7 h-7 bg-orange-500 hover:bg-orange-600 text-white rounded-full flex items-center justify-center shadow-md transition disabled:opacity-50"
+          >
+            {uploadingPhoto
+              ? <i className="fas fa-spinner fa-spin text-[10px]"></i>
+              : <i className="fas fa-camera text-[10px]"></i>
+            }
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handlePhotoChange}
+          />
+        </div>
+
         <h2 className="text-base font-bold text-gray-800 mt-3">{user?.fullName}</h2>
         <p className="text-gray-400 text-xs mt-0.5">
           Member since {new Date(user?.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
@@ -63,6 +107,12 @@ export default function Profile() {
               {user?.referralLevel ? `Level ${user.referralLevel}` : "Member"}
             </span>
           </div>
+        )}
+
+        {msg.text && (
+          <p className={`text-xs font-semibold mt-2 ${msg.success ? "text-green-600" : "text-red-500"}`}>
+            {msg.text}
+          </p>
         )}
       </div>
 
@@ -99,11 +149,6 @@ export default function Profile() {
               />
             </div>
           ))}
-          {msg.text && (
-            <p className={`text-xs font-semibold text-center mb-2 ${msg.success ? "text-green-600" : "text-red-500"}`}>
-              {msg.text}
-            </p>
-          )}
           <div className="flex gap-2 mt-2">
             <button
               onClick={handleSave} disabled={saving}
