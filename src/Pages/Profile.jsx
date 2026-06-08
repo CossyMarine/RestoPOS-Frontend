@@ -7,11 +7,11 @@ import BottomNav from "../Components/BottomNav";
 export default function Profile() {
   const { user, setUser, logout } = useContext(AuthContext);
   const { wallet } = useContext(WalletContext);
-  const [editMode, setEditMode]       = useState(false);
-  const [saving, setSaving]           = useState(false);
+  const [editMode, setEditMode]             = useState(false);
+  const [saving, setSaving]                 = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [msg, setMsg]                 = useState({ text: "", success: true });
-  const [form, setForm]               = useState({
+  const [msg, setMsg]                       = useState({ text: "", success: true });
+  const [form, setForm]                     = useState({
     fullName: user?.fullName || "",
     phone:    user?.phone    || "",
     country:  user?.country  || "",
@@ -48,9 +48,8 @@ export default function Profile() {
     try {
       const fd = new FormData();
       fd.append("avatar", file);
-      const res = await API.post("/users/avatar", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      // No manual Content-Type — browser sets it with the correct multipart boundary
+      const res = await API.post("/users/avatar", fd);
       setUser((prev) => ({ ...prev, photo: res.data.photo }));
       flash("✅ Photo updated!");
     } catch (err) {
@@ -70,14 +69,12 @@ export default function Profile() {
       </nav>
 
       <div className="bg-white shadow rounded-xl mx-3 mt-4 p-5 flex flex-col items-center text-center">
-        {/* Avatar with upload button */}
         <div className="relative">
           <img
             src={user?.photo || avatar}
             alt="Avatar"
             style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover", border: "3px solid #f97316" }}
           />
-          {/* Camera button overlay */}
           <button
             onClick={() => fileRef.current?.click()}
             disabled={uploadingPhoto}
