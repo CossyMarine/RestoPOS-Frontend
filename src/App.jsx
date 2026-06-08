@@ -32,6 +32,7 @@ import FAQ from "./Pages/FAQ";
 import Support from "./Pages/Support";
 import SupportChat from "./Pages/SupportChat";
 import Announcements from "./Pages/Announcements";
+import TopEarners from "./Pages/TopEarners";
 
 import AdminLayout from "./Pages/Admin/AdminLayout";
 import AdminDashboard from "./Pages/Admin/AdminDashboard";
@@ -83,7 +84,9 @@ const App = () => (
                         <Route path="/support"          element={<ProtectedRoute><Support /></ProtectedRoute>} />
                         <Route path="/support/:id"      element={<ProtectedRoute><SupportChat /></ProtectedRoute>} />
                         <Route path="/announcements"    element={<ProtectedRoute><Announcements /></ProtectedRoute>} />
+                        <Route path="/top-earners" element={<TopEarners />} />
 
+                        
                         {/* Admin */}
                         <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
                           <Route index element={<AdminDashboard />} />
