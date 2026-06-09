@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import TopBar from "../Components/TopBar";
 import BottomNav from "../Components/BottomNav";
+import BadgeIcon from "../Components/BadgeIcon";
 
 const COUNTRY_ISO = {
   Nigeria: "ng", Kenya: "ke", Ghana: "gh", "South Africa": "za",
@@ -85,21 +86,35 @@ export default function TopEarners() {
             const { ring, label, bg } = rankStyle(i);
             return (
               <div key={e._id} className={`${bg} rounded-2xl shadow flex items-center gap-4 px-4 py-3 ${ring}`}>
+
                 {/* Rank */}
-                <div className="w-8 text-center">
+                <div className="w-8 text-center shrink-0">
                   <span className={`font-extrabold ${i < 3 ? "text-xl" : "text-sm text-gray-500"}`}>
                     {label}
                   </span>
                 </div>
 
                 {/* Avatar */}
-                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center font-extrabold text-orange-500 text-lg shrink-0">
-                  {e.firstName?.[0]?.toUpperCase() || "?"}
+                <div className="relative shrink-0">
+                  {e.photo ? (
+                    <img
+                      src={e.photo}
+                      alt={e.firstName}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-white"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center font-extrabold text-orange-500 text-lg">
+                      {e.firstName?.[0]?.toUpperCase() || "?"}
+                    </div>
+                  )}
                 </div>
 
-                {/* Name + country */}
+                {/* Name + badge + country */}
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-gray-800 text-sm truncate">{e.firstName}</p>
+                  <div className="flex items-center gap-1">
+                    <p className="font-bold text-gray-800 text-sm truncate">{e.firstName}</p>
+                    {e.badge && !e.badge.hidden && <BadgeIcon badge={e.badge} size={15} />}
+                  </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <Flag country={e.country} />
                     <span className="text-[10px] text-gray-400">{e.country || "—"}</span>
@@ -113,6 +128,7 @@ export default function TopEarners() {
                   </p>
                   <p className="text-[10px] text-gray-400">last 24h</p>
                 </div>
+
               </div>
             );
           })}
@@ -122,4 +138,4 @@ export default function TopEarners() {
       <BottomNav />
     </div>
   );
-                  }
+                                                     }
