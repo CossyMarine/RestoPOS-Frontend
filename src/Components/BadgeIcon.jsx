@@ -14,7 +14,6 @@ export default function BadgeIcon({ badge, size = 16 }) {
           height: size,
           borderRadius: "50%",
           border: "1.5px solid #fff",
-          boxShadow: "0 0 0 1.5px #f97316",
           objectFit: "cover",
           display: "inline-block",
         }}
