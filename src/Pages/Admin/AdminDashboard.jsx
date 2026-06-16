@@ -1,92 +1,53 @@
-import React, { useEffect, useState } from "react";
-import API from "../../api/axios";
+import React from "react";
 
 const StatCard = ({ icon, label, value, color }) => (
-  <div className="bg-white rounded-xl shadow p-4 flex items-center gap-4">
-    <div className={`${color} rounded-full w-12 h-12 flex items-center justify-center shrink-0`}>
-      <i className={`fas ${icon} text-white text-lg`}></i>
+  <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-3">
+    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${color}`}>
+      <i className={`fas ${icon} text-white text-sm`}></i>
     </div>
     <div>
-      <p className="text-xs text-gray-400 font-medium">{label}</p>
-      <p className="text-xl font-extrabold text-gray-800">{value}</p>
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className="text-xl font-extrabold text-white">{value}</p>
     </div>
   </div>
 );
 
 const AdminDashboard = () => {
-  const [analytics, setAnalytics] = useState(null);
-  const [settings, setSettings]   = useState(null);
-  const [loading, setLoading]     = useState(true);
-
-  useEffect(() => {
-    Promise.all([
-      API.get("/admin/analytics"),
-      API.get("/admin/settings"),
-    ])
-      .then(([aRes, sRes]) => { setAnalytics(aRes.data); setSettings(sRes.data); })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) return (
-    <div className="flex items-center justify-center h-64">
-      <p className="text-orange-500 font-bold animate-pulse">Loading dashboard...</p>
-    </div>
-  );
+  const users    = JSON.parse(localStorage.getItem("mp_users")    || "[]");
+  const deposits = JSON.parse(localStorage.getItem("mp_deposits") || "[]");
+  const totalDeposited = deposits.reduce((s, d) => s + Number(d.amount), 0);
+  const pending  = deposits.filter((d) => d.status === "pending").length;
 
   return (
-    <div className="space-y-5">
-      <h2 className="text-lg font-extrabold text-gray-800">Overview</h2>
+    <div className="space-y-5" style={{ fontFamily: "Poppins, sans-serif" }}>
+      <h2 className="text-lg font-extrabold text-white">Overview</h2>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon="fa-users"       label="Total Users"      value={analytics?.totalUsers      ?? "—"} color="bg-purple-500" />
-        <StatCard icon="fa-ban"         label="Blocked Users"    value={analytics?.blockedUsers    ?? "—"} color="bg-red-500" />
-        <StatCard icon="fa-list-check"  label="Total Campaigns"  value={analytics?.totalCampaigns  ?? "—"} color="bg-blue-500" />
-        <StatCard icon="fa-dollar-sign" label="Platform Revenue" value={`$${Number(analytics?.totalRevenue ?? 0).toFixed(2)}`} color="bg-green-500" />
+        <StatCard icon="fa-users"       label="Total Users"     value={users.length}                       color="bg-blue-600" />
+        <StatCard icon="fa-wallet"      label="Deposit Requests" value={deposits.length}                   color="bg-purple-600" />
+        <StatCard icon="fa-clock"       label="Pending"         value={pending}                            color="bg-yellow-600" />
+        <StatCard icon="fa-coins"       label="Total KES"       value={`${totalDeposited.toLocaleString()}`} color="bg-green-600" />
       </div>
 
-      {/* Current Settings snapshot */}
-      <div className="bg-white rounded-xl shadow p-4">
-        <h3 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
-          <i className="fas fa-sliders text-orange-500"></i> Current Settings
-        </h3>
-        {settings ? (
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-            {[
-              { label: "Platform Fee",        value: settings.platformFeePct       != null ? `${settings.platformFeePct}%`      : "Not set" },
-              { label: "Withdrawal Fee",      value: settings.withdrawalFeePct     != null ? `${settings.withdrawalFeePct}%`    : "Not set" },
-              { label: "Offerwall Fee",       value: settings.offerwallFeePct      != null ? `${settings.offerwallFeePct}%`     : "Not set" },
-              { label: "Min Withdrawal",      value: settings.minWithdrawal        != null ? `$${settings.minWithdrawal}`       : "Not set" },
-              { label: "Signup Bonus",        value: settings.signupBonus          != null ? `$${settings.signupBonus}`         : "Not set" },
-              { label: "Daily Check-in",      value: settings.dailyCheckInAmount   != null ? `$${settings.dailyCheckInAmount}`  : "Not set" },
-              { label: "Check-in Enabled",    value: settings.dailyCheckInEnabled  != null ? (settings.dailyCheckInEnabled ? "Yes" : "No") : "Not set" },
-              { label: "Referral Commission", value: settings.referralCommissionPct != null ? `${settings.referralCommissionPct}%` : "Not set" },
-              { label: "Maintenance Mode",    value: settings.maintenanceMode      != null ? (settings.maintenanceMode ? "ON 🔴" : "OFF 🟢") : "Not set" },
-            ].map(({ label, value }) => (
-              <div key={label} className="bg-gray-50 rounded-xl p-3">
-                <p className="text-xs text-gray-400 font-medium">{label}</p>
-                <p className="font-bold text-gray-800 mt-0.5">{value}</p>
+      {/* RECENT DEPOSITS */}
+      <div>
+        <h3 className="text-sm font-bold text-white mb-3">Recent Deposit Requests</h3>
+        {deposits.length === 0
+          ? <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center text-gray-500 text-sm">No deposits yet</div>
+          : deposits.slice(-5).reverse().map((d) => (
+            <div key={d.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between mb-2">
+              <div>
+                <p className="text-white text-sm font-semibold">{d.userName}</p>
+                <p className="text-gray-500 text-xs">{d.mpesaPhone} · {new Date(d.date).toLocaleDateString()}</p>
               </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-400">Settings not loaded.</p>
-        )}
+              <div className="text-right">
+                <p className="text-cyan-400 font-extrabold">KES {Number(d.amount).toLocaleString()}</p>
+                <span className="text-xs bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded-lg font-semibold">Pending</span>
+              </div>
+            </div>
+          ))
+        }
       </div>
-
-      {/* Maintenance mode quick toggle */}
-      {settings && (
-        <div className={`rounded-xl p-4 flex items-center justify-between ${settings.maintenanceMode ? "bg-red-50 border border-red-200" : "bg-green-50 border border-green-200"}`}>
-          <div>
-            <p className="font-bold text-gray-800 text-sm">Maintenance Mode</p>
-            <p className="text-xs text-gray-500 mt-0.5">{settings.maintenanceMessage || "No message set"}</p>
-          </div>
-          <span className={`text-xs font-bold px-3 py-1.5 rounded-full ${settings.maintenanceMode ? "bg-red-500 text-white" : "bg-green-500 text-white"}`}>
-            {settings.maintenanceMode ? "ON" : "OFF"}
-          </span>
-        </div>
-      )}
     </div>
   );
 };
