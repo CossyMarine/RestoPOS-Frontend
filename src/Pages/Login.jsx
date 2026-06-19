@@ -1,110 +1,97 @@
-// src/Pages/Login.jsx
 import React, { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../Context/AuthContext";
-import logo from "../Assets/logo.png";
 
 const Login = () => {
   const { login } = useContext(AuthContext);
-  const navigate = useNavigate();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const navigate  = useNavigate();
+  const [form, setForm]     = useState({ phone: "", password: "" });
   const [showPw, setShowPw] = useState(false);
-  const [msg, setMsg] = useState("");
+  const [msg, setMsg]       = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMsg("");
+    setLoading(true); setMsg("");
     try {
       const res = await login(form);
       const role = res.user?.role;
-      if (role === "admin" || role === "superadmin") {
-        navigate("/admin");
-      } else {
-        navigate("/home");
-      }
+      navigate(["admin","superadmin"].includes(role) ? "/admin" : "/home");
     } catch (err) {
-      setMsg(err.response?.data?.message || "Login failed. Try again.");
+      setMsg(err.response?.data?.message || "Invalid phone or password.");
     }
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center px-4">
-      <div className="bg-white w-full max-w-sm rounded-2xl shadow-lg p-6">
-        <div className="flex flex-col items-center mb-6">
-          <img
-            src={logo}
-            alt="MarineCash"
-            style={{ width: "64px", height: "64px", borderRadius: "50%", objectFit: "cover" }}
-            className="mb-2"
-          />
-          <h1 className="text-2xl font-extrabold text-orange-500">MarineCash</h1>
-          <p className="text-gray-400 text-sm">Sign in to your account</p>
+    <div className="min-h-screen flex items-center justify-center px-4"
+      style={{ background: "linear-gradient(135deg,#0a1628 0%,#0d2144 60%,#0a3060 100%)", fontFamily: "Poppins,sans-serif" }}>
+      <div className="w-full max-w-sm">
+
+        {/* Brand */}
+        <div className="text-center mb-8">
+          <div className="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg,#06b6d4,#3b82f6)" }}>
+            <i className="fas fa-rectangle-ad text-white text-xl"></i>
+          </div>
+          <h1 className="text-2xl font-extrabold text-white">
+            Marine<span style={{ color: "#22d3ee" }}>Ads</span>
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">Sign in to your account</p>
         </div>
 
-        {msg && (
-          <div className="bg-red-50 border border-red-300 text-red-600 text-sm rounded-xl p-3 mb-4 text-center">
-            {msg}
-          </div>
-        )}
+        <div className="rounded-3xl p-6 border border-white/10"
+          style={{ background: "rgba(255,255,255,0.05)", backdropFilter: "blur(12px)" }}>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="text-xs font-semibold text-gray-500">Email</label>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="your@email.com"
-              required
-              className="w-full border-2 border-gray-200 focus:border-orange-400 rounded-xl px-4 py-3 text-sm mt-1 outline-none transition"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold text-gray-500">Password</label>
-            <div className="relative mt-1">
-              <input
-                type={showPw ? "text" : "password"}
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                placeholder="••••••••"
-                required
-                className="w-full border-2 border-gray-200 focus:border-orange-400 rounded-xl px-4 py-3 text-sm outline-none transition pr-12"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPw(!showPw)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
-              >
-                <i className={`fas ${showPw ? "fa-eye-slash" : "fa-eye"}`}></i>
-              </button>
+          {msg && (
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl p-3 mb-4 text-center">
+              {msg}
             </div>
-          </div>
+          )}
 
-          <div className="flex justify-end">
-            <Link to="/forgot-password" className="text-xs text-orange-500 font-semibold hover:underline">
-              Forgot Password?
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="text-xs font-semibold text-gray-400">Phone Number</label>
+              <input
+                type="tel" required placeholder="e.g. 0712345678"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                className="w-full mt-1 px-4 py-3 rounded-xl text-sm text-white outline-none transition border border-white/10 focus:border-cyan-500 placeholder-gray-600"
+                style={{ background: "rgba(255,255,255,0.05)" }}
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-400">Password</label>
+              <div className="relative mt-1">
+                <input
+                  type={showPw ? "text" : "password"} required placeholder="••••••••"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl text-sm text-white outline-none transition border border-white/10 focus:border-cyan-500 pr-12 placeholder-gray-600"
+                  style={{ background: "rgba(255,255,255,0.05)" }}
+                />
+                <button type="button" onClick={() => setShowPw(!showPw)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300">
+                  <i className={`fas ${showPw ? "fa-eye-slash" : "fa-eye"}`}></i>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" disabled={loading}
+              className="w-full py-3 rounded-xl text-sm font-bold text-white transition hover:opacity-90 active:scale-95 disabled:opacity-50 mt-2"
+              style={{ background: "linear-gradient(135deg,#06b6d4,#3b82f6)" }}>
+              {loading ? "Signing in…" : "Sign In"}
+            </button>
+          </form>
+
+          <p className="text-center text-xs text-gray-500 mt-5">
+            No account?{" "}
+            <Link to="/register" className="font-semibold hover:underline" style={{ color: "#22d3ee" }}>
+              Register
             </Link>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold py-3 rounded-xl transition-all text-sm"
-          >
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
-
-        <p className="text-center text-sm text-gray-500 mt-4">
-          Don't have an account?{" "}
-          <Link to="/register" className="text-orange-500 font-bold hover:underline">
-            Register
-          </Link>
-        </p>
+          </p>
+        </div>
       </div>
     </div>
   );
