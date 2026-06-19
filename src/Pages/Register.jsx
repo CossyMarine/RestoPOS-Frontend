@@ -4,52 +4,39 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import zxcvbn from "zxcvbn";
 import { AuthContext } from "../Context/AuthContext";
-import logo from "../Assets/logo.png";
+
+const strengthLabel = ["Weak","Fair","Good","Strong","Very Strong"];
+const strengthColor = ["#ef4444","#f97316","#eab308","#22c55e","#16a34a"];
+const strengthWidth = ["20%","40%","60%","80%","100%"];
 
 const Register = () => {
   const { register } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    fullName: "", email: "", gender: "",
-    phone: "", phoneCountry: "",
-    password: "", confirmPassword: "", agreedToTerms: false,
+    fullName: "", email: "", phone: "", password: "", confirmPassword: "",
   });
-  const [strength, setStrength] = useState(null);
-  const [showPw, setShowPw]   = useState(false);
-  const [showCpw, setShowCpw] = useState(false);
-  const [msg, setMsg]         = useState("");
-  const [loading, setLoading] = useState(false);
+  const [strength, setStrength]   = useState(null);
+  const [showPw, setShowPw]       = useState(false);
+  const [showCpw, setShowCpw]     = useState(false);
+  const [msg, setMsg]             = useState("");
+  const [loading, setLoading]     = useState(false);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setForm({ ...form, [name]: type === "checkbox" ? checked : value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
     if (name === "password") setStrength(zxcvbn(value).score);
   };
 
-  const handlePhone = (value, data) => {
-    setForm({
-      ...form,
-      phone: "+" + value,
-      // data.name is the full country name e.g. "Nigeria"
-      phoneCountry: data?.name || "",
-    });
-  };
-
-  const strengthLabel = ["Weak", "Fair", "Good", "Strong", "Very Strong"];
-  const strengthColor = ["text-red-500", "text-orange-400", "text-yellow-500", "text-green-500", "text-green-600"];
-  const strengthBar   = ["w-1/5 bg-red-400", "w-2/5 bg-orange-400", "w-3/5 bg-yellow-400", "w-4/5 bg-green-400", "w-full bg-green-500"];
+  const handlePhone = (value) => setForm({ ...form, phone: "+" + value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.password !== form.confirmPassword) return setMsg("Passwords do not match.");
-    if (!form.agreedToTerms) return setMsg("Please accept the terms.");
-    setLoading(true);
-    setMsg("");
+    setLoading(true); setMsg("");
     try {
-      await register(form);
-      localStorage.setItem("pendingEmail", form.email);
-      navigate("/verify-email");
+      await register({ fullName: form.fullName, email: form.email, phone: form.phone, password: form.password, confirmPassword: form.confirmPassword });
+      navigate("/login");
     } catch (err) {
       setMsg(err.response?.data?.message || "Registration failed.");
     }
@@ -57,147 +44,126 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center px-4 py-8">
-      <div className="bg-white w-full max-w-sm rounded-2xl shadow-lg p-6">
-        <div className="flex flex-col items-center mb-5">
-          <img src={logo} alt="MarineCash" className="w-14 h-14 rounded-full mb-2" />
-          <h1 className="text-2xl font-extrabold text-orange-500">Create Account</h1>
-          <p className="text-gray-400 text-sm">Join MarineCash and start earning</p>
+    <div className="min-h-screen flex items-center justify-center px-4 py-10"
+      style={{ background: "linear-gradient(135deg,#0a1628 0%,#0d2144 60%,#0a3060 100%)", fontFamily: "Poppins,sans-serif" }}>
+      <div className="w-full max-w-sm">
+
+        <div className="text-center mb-7">
+          <div className="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg,#06b6d4,#3b82f6)" }}>
+            <i className="fas fa-rectangle-ad text-white text-xl"></i>
+          </div>
+          <h1 className="text-2xl font-extrabold text-white">
+            Marine<span style={{ color: "#22d3ee" }}>Ads</span>
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">Create your free account</p>
         </div>
 
-        {msg && (
-          <div className="bg-red-50 border border-red-300 text-red-600 text-sm rounded-xl p-3 mb-4 text-center">
-            {msg}
-          </div>
-        )}
+        <div className="rounded-3xl p-6 border border-white/10"
+          style={{ background: "rgba(255,255,255,0.05)", backdropFilter: "blur(12px)" }}>
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {/* Full Name */}
-          <div>
-            <label className="text-xs font-semibold text-gray-500">Full Name</label>
-            <input
-              type="text" name="fullName" value={form.fullName}
-              onChange={handleChange} placeholder="John Doe" required
-              className="w-full border-2 border-gray-200 focus:border-orange-400 rounded-xl px-4 py-2.5 text-sm mt-1 outline-none transition"
-            />
-          </div>
+          {msg && (
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl p-3 mb-4 text-center">
+              {msg}
+            </div>
+          )}
 
-          {/* Email */}
-          <div>
-            <label className="text-xs font-semibold text-gray-500">Email</label>
-            <input
-              type="email" name="email" value={form.email}
-              onChange={handleChange} placeholder="your@email.com" required
-              className="w-full border-2 border-gray-200 focus:border-orange-400 rounded-xl px-4 py-2.5 text-sm mt-1 outline-none transition"
-            />
-          </div>
-
-          {/* Gender */}
-          <div>
-            <label className="text-xs font-semibold text-gray-500">Gender</label>
-            <select
-              name="gender" value={form.gender} onChange={handleChange} required
-              className="w-full border-2 border-gray-200 focus:border-orange-400 rounded-xl px-4 py-2.5 text-sm mt-1 outline-none transition bg-white"
-            >
-              <option value="">Select Gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="prefer_not_to_say">Prefer not to say</option>
-            </select>
-          </div>
-
-          {/* Phone */}
-          <div>
-            <label className="text-xs font-semibold text-gray-500">Phone Number</label>
-            <div className="mt-1">
-              <PhoneInput
-                country="ke"
-                value={form.phone}
-                onChange={handlePhone}
-                enableSearch
-                inputStyle={{
-                  width: "100%", border: "2px solid #e5e7eb",
-                  borderRadius: "12px", fontSize: "14px", padding: "10px 10px 10px 48px",
-                }}
-                buttonStyle={{ border: "none", background: "transparent" }}
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {/* Full Name */}
+            <div>
+              <label className="text-xs font-semibold text-gray-400">Full Name</label>
+              <input type="text" name="fullName" required placeholder="John Doe"
+                value={form.fullName} onChange={handleChange}
+                className="w-full mt-1 px-4 py-2.5 rounded-xl text-sm text-white outline-none transition border border-white/10 focus:border-cyan-500 placeholder-gray-600"
+                style={{ background: "rgba(255,255,255,0.05)" }}
               />
             </div>
-            <p className="text-[10px] text-gray-400 mt-1">
-              Select your country flag and enter your number — this helps us verify your location.
-            </p>
-          </div>
 
-          {/* Password */}
-          <div>
-            <label className="text-xs font-semibold text-gray-500">Password</label>
-            <div className="relative mt-1">
-              <input
-                type={showPw ? "text" : "password"} name="password"
-                value={form.password} onChange={handleChange}
-                placeholder="••••••••" required
-                className="w-full border-2 border-gray-200 focus:border-orange-400 rounded-xl px-4 py-2.5 text-sm outline-none transition pr-10"
+            {/* Email */}
+            <div>
+              <label className="text-xs font-semibold text-gray-400">Email</label>
+              <input type="email" name="email" required placeholder="you@email.com"
+                value={form.email} onChange={handleChange}
+                className="w-full mt-1 px-4 py-2.5 rounded-xl text-sm text-white outline-none transition border border-white/10 focus:border-cyan-500 placeholder-gray-600"
+                style={{ background: "rgba(255,255,255,0.05)" }}
               />
-              <button type="button" onClick={() => setShowPw(!showPw)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                <i className={`fas ${showPw ? "fa-eye-slash" : "fa-eye"}`}></i>
-              </button>
             </div>
-            {strength !== null && (
+
+            {/* Phone */}
+            <div>
+              <label className="text-xs font-semibold text-gray-400">Phone Number</label>
               <div className="mt-1">
-                <div className="h-1.5 bg-gray-200 rounded-full">
-                  <div className={`h-1.5 rounded-full transition-all ${strengthBar[strength]}`}></div>
-                </div>
-                <p className={`text-xs mt-0.5 font-semibold ${strengthColor[strength]}`}>
-                  {strengthLabel[strength]}
-                </p>
+                <PhoneInput
+                  country="ke" value={form.phone.replace("+","")} onChange={handlePhone}
+                  enableSearch
+                  inputStyle={{
+                    width: "100%", background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px",
+                    color: "#fff", fontSize: "14px", padding: "10px 10px 10px 48px",
+                  }}
+                  buttonStyle={{ background: "transparent", border: "none" }}
+                  dropdownStyle={{ background: "#1e293b", color: "#fff" }}
+                />
               </div>
-            )}
-          </div>
-
-          {/* Confirm Password */}
-          <div>
-            <label className="text-xs font-semibold text-gray-500">Confirm Password</label>
-            <div className="relative mt-1">
-              <input
-                type={showCpw ? "text" : "password"} name="confirmPassword"
-                value={form.confirmPassword} onChange={handleChange}
-                placeholder="••••••••" required
-                className="w-full border-2 border-gray-200 focus:border-orange-400 rounded-xl px-4 py-2.5 text-sm outline-none transition pr-10"
-              />
-              <button type="button" onClick={() => setShowCpw(!showCpw)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                <i className={`fas ${showCpw ? "fa-eye-slash" : "fa-eye"}`}></i>
-              </button>
             </div>
-          </div>
 
-          {/* Terms */}
-          <label className="flex items-start gap-2 cursor-pointer">
-            <input
-              type="checkbox" name="agreedToTerms"
-              checked={form.agreedToTerms} onChange={handleChange}
-              className="mt-0.5 accent-orange-500"
-            />
-            <span className="text-xs text-gray-500">
-              I agree to the{" "}
-              <Link to="/terms" className="text-orange-500 font-semibold hover:underline">
-                Terms & Conditions
-              </Link>
-            </span>
-          </label>
+            {/* Password */}
+            <div>
+              <label className="text-xs font-semibold text-gray-400">Password</label>
+              <div className="relative mt-1">
+                <input type={showPw ? "text" : "password"} name="password" required placeholder="••••••••"
+                  value={form.password} onChange={handleChange}
+                  className="w-full px-4 py-2.5 rounded-xl text-sm text-white outline-none transition border border-white/10 focus:border-cyan-500 pr-10 placeholder-gray-600"
+                  style={{ background: "rgba(255,255,255,0.05)" }}
+                />
+                <button type="button" onClick={() => setShowPw(!showPw)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  <i className={`fas ${showPw ? "fa-eye-slash" : "fa-eye"}`}></i>
+                </button>
+              </div>
+              {strength !== null && (
+                <div className="mt-1.5">
+                  <div className="h-1.5 rounded-full bg-white/10">
+                    <div className="h-1.5 rounded-full transition-all"
+                      style={{ width: strengthWidth[strength], background: strengthColor[strength] }}></div>
+                  </div>
+                  <p className="text-xs mt-0.5 font-semibold" style={{ color: strengthColor[strength] }}>
+                    {strengthLabel[strength]}
+                  </p>
+                </div>
+              )}
+            </div>
 
-          <button
-            type="submit" disabled={loading}
-            className="w-full bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold py-3 rounded-xl transition-all text-sm mt-2"
-          >
-            {loading ? "Creating Account..." : "Register"}
-          </button>
-        </form>
+            {/* Confirm Password */}
+            <div>
+              <label className="text-xs font-semibold text-gray-400">Confirm Password</label>
+              <div className="relative mt-1">
+                <input type={showCpw ? "text" : "password"} name="confirmPassword" required placeholder="••••••••"
+                  value={form.confirmPassword} onChange={handleChange}
+                  className="w-full px-4 py-2.5 rounded-xl text-sm text-white outline-none transition border border-white/10 focus:border-cyan-500 pr-10 placeholder-gray-600"
+                  style={{ background: "rgba(255,255,255,0.05)" }}
+                />
+                <button type="button" onClick={() => setShowCpw(!showCpw)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  <i className={`fas ${showCpw ? "fa-eye-slash" : "fa-eye"}`}></i>
+                </button>
+              </div>
+            </div>
 
-        <p className="text-center text-sm text-gray-500 mt-4">
-          Already have an account?{" "}
-          <Link to="/login" className="text-orange-500 font-bold hover:underline">Login</Link>
-        </p>
+            <button type="submit" disabled={loading}
+              className="w-full py-3 rounded-xl text-sm font-bold text-white transition hover:opacity-90 active:scale-95 disabled:opacity-50 mt-1"
+              style={{ background: "linear-gradient(135deg,#06b6d4,#3b82f6)" }}>
+              {loading ? "Creating Account…" : "Create Account"}
+            </button>
+          </form>
+
+          <p className="text-center text-xs text-gray-500 mt-5">
+            Already have an account?{" "}
+            <Link to="/login" className="font-semibold hover:underline" style={{ color: "#22d3ee" }}>
+              Sign in
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
