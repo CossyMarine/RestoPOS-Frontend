@@ -38,7 +38,7 @@ const Landing = () => (
       <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold mb-6 border border-cyan-500/30"
         style={{ background: "rgba(6,182,212,0.08)", color: "#67e8f9" }}>
         <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-        Kenya's Growing Ad Network
+        World's Growing Ad Network
       </div>
       <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-5">
         Run Ads. Display Ads.<br />
