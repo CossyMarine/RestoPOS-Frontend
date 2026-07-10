@@ -1,58 +1,78 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./Context/AuthContext";
-import ProtectedRoute from "./Components/ProtectedRoute";
-import AdminRoute     from "./Components/AdminRoute";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
+import CashierPage from "./pages/CashierPage";
+import WaiterPage from "./pages/WaiterPage";
+import KitchenPage from "./pages/KitchenPage";
+import CustomerPage from "./pages/CustomerPage";
 
-import Landing       from "./Pages/Landing";
-import Login         from "./Pages/Login";
-import Register      from "./Pages/Register";
+function PrivateRoute({ children }) {
+  const token = localStorage.getItem("token");
 
-import UserLayout    from "./Pages/UserLayout";
-import Home          from "./Pages/Home";
-import Deposit       from "./Pages/Deposit";
-import CreateAd      from "./Pages/CreateAd";
-import MyCampaigns   from "./Pages/MyCampaigns";
-import CampaignDetail from "./Pages/CampaignDetail";
-import Publisher     from "./Pages/Publisher";
-import Profile       from "./Pages/Profile";
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
 
-import AdminLayout      from "./Pages/Admin/AdminLayout";
-import AdminDashboard   from "./Pages/Admin/AdminDashboard";
-import AdminDeposits    from "./Pages/Admin/AdminDeposits";
-import AdminUsers       from "./Pages/Admin/AdminUsers";
+  return children;
+}
 
-const App = () => (
-  <AuthProvider>
-    <Router>
+function PublicRoute({ children }) {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    return <Navigate to="/order" replace />;
+  }
+
+  return children;
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
       <Routes>
-        {/* Public */}
-        <Route path="/"         element={<Landing />} />
-        <Route path="/login"    element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        {/* Redirect root to Order page */}
+        <Route path="/" element={<Navigate to="/order" replace />} />
 
-        {/* User (protected, nested inside shared layout) */}
-        <Route element={<ProtectedRoute><UserLayout /></ProtectedRoute>}>
-          <Route path="/home"            element={<Home />} />
-          <Route path="/deposit"         element={<Deposit />} />
-          <Route path="/create-ad"       element={<CreateAd />} />
-          <Route path="/campaigns"       element={<MyCampaigns />} />
-          <Route path="/campaigns/:id"   element={<CampaignDetail />} />
-          <Route path="/publisher"       element={<Publisher />} />
-          <Route path="/profile"         element={<Profile />} />
-        </Route>
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <LoginPage />
+            </PublicRoute>
+          }
+        />
 
-        {/* Admin (protected + role-gated, nested inside admin layout) */}
-        <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
-          <Route path="/admin"           element={<AdminDashboard />} />
-          <Route path="/admin/deposits"  element={<AdminDeposits />} />
-          <Route path="/admin/users"     element={<AdminUsers />} />
-        </Route>
+        <Route path="/order" element={<CustomerPage />} />
 
-        <Route path="*" element={<Navigate to="/" />} />
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <CashierPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/waiter"
+          element={
+            <PrivateRoute>
+              <WaiterPage />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/kitchen"
+          element={
+            <PrivateRoute>
+              <KitchenPage />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Redirect unknown routes to Order page */}
+        <Route path="*" element={<Navigate to="/order" replace />} />
       </Routes>
-    </Router>
-  </AuthProvider>
-);
-
-export default App;
+    </BrowserRouter>
+  );
+}
