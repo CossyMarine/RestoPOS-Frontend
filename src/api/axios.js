@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "https://mar1nepanel.onrender.com/api",
+  baseURL: import.meta.env.VITE_API_URL || "https://rps2-backend.onrender.com/api",
   timeout: 10000,
 });
 
