@@ -1,27 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import LoginPage from "./pages/LoginPage";
 import CashierPage from "./pages/CashierPage";
 import WaiterPage from "./pages/WaiterPage";
 import KitchenPage from "./pages/KitchenPage";
 import CustomerPage from "./pages/CustomerPage";
+import OrdersPage from "./pages/OrdersPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem("token");
-
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return children;
-}
-
-function PublicRoute({ children }) {
-  const token = localStorage.getItem("token");
-
-  if (token) {
-    return <Navigate to="/order" replace />;
-  }
-
+  if (!token) return <Navigate to="/profile" replace />;
   return children;
 }
 
@@ -29,19 +16,16 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Redirect root to Order page */}
         <Route path="/" element={<Navigate to="/order" replace />} />
 
-        <Route
-          path="/login"
-          element={
-            <PublicRoute>
-              <LoginPage />
-            </PublicRoute>
-          }
-        />
-
+        {/* Customer-facing, no login required */}
         <Route path="/order" element={<CustomerPage />} />
+        <Route path="/orders" element={<OrdersPage />} />
+
+        {/* One login/register page for everyone, lives in the Profile tab */}
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/login" element={<Navigate to="/profile" replace />} />
+        <Route path="/register" element={<Navigate to="/profile" replace />} />
 
         <Route
           path="/dashboard"
@@ -51,7 +35,6 @@ export default function App() {
             </PrivateRoute>
           }
         />
-
         <Route
           path="/waiter"
           element={
@@ -60,7 +43,6 @@ export default function App() {
             </PrivateRoute>
           }
         />
-
         <Route
           path="/kitchen"
           element={
@@ -70,7 +52,6 @@ export default function App() {
           }
         />
 
-        {/* Redirect unknown routes to Order page */}
         <Route path="*" element={<Navigate to="/order" replace />} />
       </Routes>
     </BrowserRouter>
