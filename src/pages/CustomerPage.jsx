@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { io } from "socket.io-client";
-import toast, { Toaster } from "react-hot-toast";
+import { toast } from "react-toastify";
 import { UtensilsCrossed, Plus, Minus, X, ShoppingCart, Clock } from "lucide-react";
 import useGuestSession from "../hooks/useGuestSession";
 import API from "../api/axios";
@@ -138,8 +138,6 @@ export default function CustomerPage() {
 
   return (
     <div className="min-h-screen bg-stone-50 pb-24">
-      <Toaster position="top-center" />
-
       {/* Header */}
       <header className="bg-white border-b border-stone-200 sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-5 py-4 flex items-center justify-between gap-4">
@@ -293,4 +291,4 @@ export default function CustomerPage() {
       )}
     </div>
   );
-                }
+}
