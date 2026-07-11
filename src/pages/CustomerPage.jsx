@@ -5,6 +5,8 @@ import { UtensilsCrossed, Plus, Minus, X, ShoppingCart, Clock } from "lucide-rea
 import useGuestSession from "../hooks/useGuestSession";
 import API from "../api/axios";
 
+import BottomNav from "../components/BottomNav";
+
 const SOCKET_URL = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/api\/?$/, "");
 
 const STATUS_STYLE = {
@@ -289,6 +291,7 @@ export default function CustomerPage() {
           </div>
         </div>
       )}
+        <BottomNav />
     </div>
   );
 }
